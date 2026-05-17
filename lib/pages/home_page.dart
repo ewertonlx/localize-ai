@@ -150,7 +150,6 @@ class _HomePageState extends State<HomePage> {
         ),
         const SizedBox(height: 12),
 
-        // Flags horizontais dos 3 países em destaque (tamanho reduzido)
         SizedBox(
           height: 72,
           child: SingleChildScrollView(
