@@ -5,19 +5,40 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/country.dart';
+import '../services/countries_api.dart';
 import '../widgets/country_flag.dart';
 
-class CountryDetailsPage extends StatelessWidget {
+class CountryDetailsPage extends StatefulWidget {
   const CountryDetailsPage({super.key, required this.country});
 
   final Country country;
 
   @override
+  State<CountryDetailsPage> createState() => _CountryDetailsPageState();
+}
+
+class _CountryDetailsPageState extends State<CountryDetailsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  Future<List<Country>>? _countriesFuture;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<List<Country>> _loadCountriesIfNeeded() {
+    return _countriesFuture ??= CountriesApi.fetchAllCountries();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final country = widget.country;
     final formatter = NumberFormat('#,##0', 'pt_BR');
     final capitalText = country.capitals.isNotEmpty
         ? country.capitals.join(', ')
         : 'Sem capital registrada';
+    final query = _searchController.text.trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Informações')),
@@ -35,6 +56,17 @@ class CountryDetailsPage extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _searchController,
+            onChanged: (_) => setState(() {}),
+            decoration: const InputDecoration(
+              labelText: 'Buscar',
+              hintText: 'Ex: Brazil',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 16),
           Card(
@@ -81,6 +113,61 @@ class CountryDetailsPage extends StatelessWidget {
               ),
             ),
           ),
+          if (query.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Países encontrados',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            FutureBuilder<List<Country>>(
+              future: _loadCountriesIfNeeded(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Erro ao carregar países: ${snapshot.error}'),
+                  );
+                }
+
+                final countries = snapshot.data ?? const <Country>[];
+                final matches = countries
+                    .where((item) => item.name.toLowerCase().contains(query))
+                    .toList();
+
+                if (matches.isEmpty) {
+                  return const Text('Nenhum país encontrado para essa busca.');
+                }
+
+                return ListView.separated(
+                  itemCount: matches.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final item = matches[index];
+                    return Card(
+                      child: ListTile(
+                        leading: CountryFlag(flagUrl: item.flagUrl),
+                        title: Text(item.name),
+                        subtitle: Text(item.region),
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => CountryDetailsPage(country: item),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
           const SizedBox(height: 12),
           Text(
             'Mini mapa da localizacao',

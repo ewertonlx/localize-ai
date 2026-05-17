@@ -149,15 +149,44 @@ class _HomePageState extends State<HomePage> {
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 12),
-        ...countries.map(
-          (country) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: _FeaturedCountryCard(
-              country: country,
-              onTap: () => _openCountryDetailsByName(country.name),
+
+        // Flags horizontais dos 3 países em destaque (tamanho reduzido)
+        SizedBox(
+          height: 72,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: countries.map((country) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 30),
+                  child: Semantics(
+                    label: country.name,
+                    button: true,
+                    child: Material(
+                      elevation: 0,
+                      borderRadius: BorderRadius.circular(6),
+                      clipBehavior: Clip.hardEdge,
+                      child: InkWell(
+                        onTap: () => _openCountryDetailsByName(country.name),
+                        child: SizedBox(
+                          width: 96,
+                          height: 60,
+                          child: CountryFlag(
+                            flagUrl: country.flagUrl,
+                            width: 96,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ),
+
         const SizedBox(height: 12),
         const GoogleGlobeViewer(),
       ],
@@ -262,27 +291,40 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFilterRow() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _FilterSquare(
-          title: 'Todos',
-          icon: Icons.public,
-          selected: _selectedFilter == HomeFilter.all,
-          onTap: () => _changeFilter(HomeFilter.all),
-        ),
-        const SizedBox(width: 12),
-        _FilterSquare(
-          title: 'Regiao',
-          icon: Icons.map,
-          selected: _selectedFilter == HomeFilter.region,
-          onTap: () => _changeFilter(HomeFilter.region),
-        ),
-        const SizedBox(width: 12),
-        _FilterSquare(
-          title: 'Capitais',
-          icon: Icons.location_city,
-          selected: _selectedFilter == HomeFilter.capitals,
-          onTap: () => _changeFilter(HomeFilter.capitals),
+        Text('Filtros', style: Theme.of(context).textTheme.titleLarge),
+
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            _FilterSquare(
+              title: 'Todos',
+              icon: Icons.public,
+              selected: _selectedFilter == HomeFilter.all,
+              onTap: () => _changeFilter(HomeFilter.all),
+            ),
+
+            const SizedBox(width: 12),
+
+            _FilterSquare(
+              title: 'Regiao',
+              icon: Icons.map,
+              selected: _selectedFilter == HomeFilter.region,
+              onTap: () => _changeFilter(HomeFilter.region),
+            ),
+
+            const SizedBox(width: 12),
+
+            _FilterSquare(
+              title: 'Capitais',
+              icon: Icons.location_city,
+              selected: _selectedFilter == HomeFilter.capitals,
+              onTap: () => _changeFilter(HomeFilter.capitals),
+            ),
+          ],
         ),
       ],
     );
@@ -292,8 +334,8 @@ class _HomePageState extends State<HomePage> {
     return TextField(
       controller: _searchController,
       decoration: const InputDecoration(
-        labelText: 'Buscar por nome do pais',
-        hintText: 'Ex.: Brazil',
+        labelText: 'Buscar',
+        hintText: 'Ex: Brazil',
         prefixIcon: Icon(Icons.search),
         border: OutlineInputBorder(),
       ),
@@ -318,25 +360,6 @@ class _HomePageState extends State<HomePage> {
       }
       _openCountryDetails(match);
     });
-  }
-}
-
-class _FeaturedCountryCard extends StatelessWidget {
-  const _FeaturedCountryCard({required this.country, required this.onTap});
-
-  final CountryPreview country;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        onTap: onTap,
-        leading: CountryFlag(flagUrl: country.flagUrl),
-        title: Text(country.name),
-        subtitle: const Text('Toque para ver informações'),
-      ),
-    );
   }
 }
 
